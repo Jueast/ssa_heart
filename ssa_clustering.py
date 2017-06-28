@@ -4,13 +4,16 @@ import argparse
 import numpy as np
 from matplotlib import pyplot as plt
 from sklearn.cluster import KMeans
-def ssa_clustring(img, L, c, cut, factor, norm, seed):
-    im = np.asarray(Image.open(opt.img)) / 256.0
+def ssa_clustering(img, L, c, cut, factor, norm, seed):
+    im = np.asarray(Image.open(img)) / 256.0
     num =int(L*L * factor)
     s, u = ssa(im, L)
     if norm:
         u = u / np.linalg.norm(u, axis=0)
     u = u[cut:num]
+    print(u[0])
+    print(u[1])
+    print(np.dot(u[0], u[1]))
     kmeans = KMeans(n_clusters=c, random_state=seed, n_jobs=-1).fit(u)
     groups = []
     for i in range(c):
@@ -21,7 +24,8 @@ def ssa_clustring(img, L, c, cut, factor, norm, seed):
         groups.append(r)
     r = [ im * 256.0 for im in reconstruct(s, groups)]
     pr = [im * 256.0] + r + [(im*256.0 - np.sum(r, axis=0))]
-    return r, pr
+    r_max = max(r, key=lambda im: np.var(im))
+    return r, pr, r_max
 
 
 if __name__ == "__main__":
@@ -42,7 +46,7 @@ if __name__ == "__main__":
     c = opt.c
     seed = opt.seed
     factor = opt.factor
-    r, pr = ssa_clustring(img, L, c, cut, factor, norm, seed) 
+    r, pr, r_max = ssa_clustering(img, L, c, cut, factor, norm, seed) 
 
     fig, axes = plt.subplots(1,c+2)
     for ax, img in zip(axes, pr):
