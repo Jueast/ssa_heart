@@ -22,7 +22,7 @@ def build_dataset(neg, pos, trans=True, usessa=False):
     if usessa:
         nims = []
         for im in nlist:
-            r, pr, r_max = ssa_clustering(im, 40, 2, 0, 0.1, False, 42)
+            r, pr, r_max = ssa_clustering(im, 40, 2, 1, 0.2, False, 42)
             nims.append(exposure.equalize_hist(np.asarray(r_max)).flatten())
 
             if len(nims) % 10 == 0:
@@ -30,7 +30,7 @@ def build_dataset(neg, pos, trans=True, usessa=False):
         print("...Negative samples processed!")
         pims = []
         for im in plist:
-            r, pr, r_max = ssa_clustering(im, 40, 2, 3, 0.25, False, 42)
+            r, pr, r_max = ssa_clustering(im, 40, 2, 1, 0.2, False, 42)
             pims.append(exposure.equalize_hist(np.asarray(r_max)).flatten())
             if len(pims) % 10 == 0:
                 print("Progress: {0}/{1}...".format(len(pims), len(plist)))
@@ -40,10 +40,17 @@ def build_dataset(neg, pos, trans=True, usessa=False):
     return dataset, rate
 
 if __name__ == "__main__":
-    NEGATIVE_DIR = sys.argv[1]
-    POSITIVE_DIR = sys.argv[2]
+    parser = argparse.ArgumentParser(description='Decompse a image and reconsturct it with 2d-ssa than do the classfication ')
+    parser.add_argument('--NEGATIVE_DIR', required=True, help="The path to neg_img")
+    parser.add_argument('--POSITIVE_DIR', required=True, help="The path to posi_img")
+    parser.add_argument('--usessa', action='store_true', help="Ust the ssa")
+    parser.add_argument('--grid_search', action='store_true')
+    opt = parser.parse_args()
 
-    dataset, rate = build_dataset(NEGATIVE_DIR, POSITIVE_DIR, usessa=True)
+    NEGATIVE_DIR = opt.NEGATIVE_DIR
+    POSITIVE_DIR = opt.POSITIVE_DIR
+
+    dataset, rate = build_dataset(NEGATIVE_DIR, POSITIVE_DIR, usessa=opt.usessa)
     l = len(dataset)
     print("...Dataset building complepted.")
     print("""
@@ -64,8 +71,8 @@ if __name__ == "__main__":
     lsvc = SVC(C=10, gamma=0.0001,kernel='rbf', class_weight='balanced').fit(X, y)
     acc = accuracy_score(lsvc.predict(X_test), y_test)
     print(acc)
-    cross_validation=False
-if cross_validation:
+    cross_validation=opt.grid_search
+    if cross_validation:
         X = scaler.fit_transform(np.asarray([x[0] for x in dataset]))
         y = np.asarray([x[1] for x in dataset])
         C_range = np.logspace(-2, 10, 13)

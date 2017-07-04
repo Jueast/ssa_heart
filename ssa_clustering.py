@@ -53,8 +53,12 @@ if __name__ == "__main__":
     r, pr, r_max = ssa_clustering(img, L, c, cut, factor, norm, seed) 
 
     fig, axes = plt.subplots(1,c+2)
+    i = 0
     for ax, img in zip(axes, pr):
-        ax.imshow(exposure.equalize_hist(img), cmap=plt.cm.gray)
-        v = np.var(img)
+        if i != 0 and i != len(pr) - 1:
+            img = exposure.equalize_hist(img) 
+        ax.imshow((img), cmap=plt.cm.gray)
+        v = np.var(pr[i])
         ax.set_title("Var: {0:4.2f}".format(v) )
+        i += 1
     plt.show()
